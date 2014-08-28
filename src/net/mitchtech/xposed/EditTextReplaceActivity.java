@@ -24,6 +24,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -92,61 +93,8 @@ public class EditTextReplaceActivity extends Activity {
 
     @Override
     protected void onPause() {
-        String json = new Gson().toJson(mList);
-        Editor prefsEditor = mPrefs.edit();
-        prefsEditor.putString("json", json);
-        prefsEditor.commit();
+        saveReplacementList();
         super.onPause();
-    }
-
-    private void addReplacement() {
-        editReplacement(new TextReplaceEntry("", ""), -1);
-    }
-
-    private void editReplacement(TextReplaceEntry entry, final int position) {
-        LayoutInflater factory = LayoutInflater.from(EditTextReplaceActivity.this);
-        final View textEntryView = factory.inflate(R.layout.dialog_edit_replacement, null);
-        final EditText actual = (EditText) textEntryView.findViewById(R.id.actual);
-        final EditText replacement = (EditText) textEntryView.findViewById(R.id.replacement);
-        actual.setText(entry.actual, TextView.BufferType.EDITABLE);
-        replacement.setText(entry.replacement, TextView.BufferType.EDITABLE);
-
-        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Define Replacement").setView(textEntryView)
-                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        if (position > -1) {
-                            mList.remove(mListview.getItemAtPosition(position));
-                        }
-                        mList.add(new TextReplaceEntry(actual.getText().toString(), replacement
-                                .getText().toString()));
-                        mListEmptyTextView.setVisibility(View.GONE);
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                    }
-                });
-        alert.show();
-    }
-
-    private void removeReplacement(final int position) {
-        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Delete Replacement?")
-                .setMessage("Are you sure you want to delete this replacement?")
-                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        mList.remove(mListview.getItemAtPosition(position));
-                        if (mList.isEmpty()) {
-                            mListEmptyTextView.setVisibility(View.VISIBLE);
-                        }
-                        mAdapter.notifyDataSetChanged();
-                    }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                    }
-                });
-        alert.show();
     }
 
     @Override
@@ -175,6 +123,90 @@ public class EditTextReplaceActivity extends Activity {
         }
 
         return false;
+    }
+
+    private void addReplacement() {
+        editReplacement(new TextReplaceEntry("", ""), -1);
+    }
+
+    private void editReplacement(TextReplaceEntry entry, final int position) {
+        LayoutInflater factory = LayoutInflater.from(EditTextReplaceActivity.this);
+        final View textEntryView = factory.inflate(R.layout.dialog_edit_replacement, null);
+        final EditText actual = (EditText) textEntryView.findViewById(R.id.actual);
+        final EditText replacement = (EditText) textEntryView.findViewById(R.id.replacement);
+        actual.setText(entry.actual, TextView.BufferType.EDITABLE);
+        replacement.setText(entry.replacement, TextView.BufferType.EDITABLE);
+
+        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
+        alert.setIcon(R.drawable.ic_launcher).setTitle("Define Replacement").setView(textEntryView)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        
+                        String actualText = actual.getText().toString();
+                        String replacementText = replacement.getText().toString();
+                        
+                        // check for regex in text ($, ^, +, *, ., !, ?, |, \, (), {}, [])
+                        if (isTextRegexFree(actualText) && isTextRegexFree(replacementText)) {
+                            if (position > -1) {
+                                mList.remove(mListview.getItemAtPosition(position));
+                            }
+                            mList.add(new TextReplaceEntry(actualText, replacementText));
+                            mListEmptyTextView.setVisibility(View.GONE);
+                            mAdapter.notifyDataSetChanged();
+                            saveReplacementList();
+                        } else {    
+                            Toast.makeText(
+                                    EditTextReplaceActivity.this,
+                                    "Text cannot contain regular expression characters ($, ^, +, *, ., !, ?, |, \\, (), {}, [])",
+                                    Toast.LENGTH_SHORT).show();
+                            editReplacement(new TextReplaceEntry(actualText, replacementText), position);
+                        }
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                });
+        alert.show();
+    }
+
+    private void removeReplacement(final int position) {
+        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
+        alert.setIcon(R.drawable.ic_launcher).setTitle("Delete Replacement?")
+                .setMessage("Are you sure you want to delete this replacement?")
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        mList.remove(mListview.getItemAtPosition(position));
+                        if (mList.isEmpty()) {
+                            mListEmptyTextView.setVisibility(View.VISIBLE);
+                        }
+                        mAdapter.notifyDataSetChanged();
+                        saveReplacementList();
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                });
+        alert.show();
+    }
+    
+    private boolean isTextRegexFree(String text) {
+        // ($, ^, +, *, ., !, ?, |, \, (), {}, [])
+        if (text.contains("$") || text.contains("^") || text.contains("+") || text.contains("*")
+                || text.contains(".") || text.contains("!") || text.contains("?")
+                || text.contains("$") || text.contains("|") || text.contains("\\")
+                || text.contains("(") || text.contains(")") || text.contains("{")
+                || text.contains("}") || text.contains("[") || text.contains("]")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    private void saveReplacementList() {
+        String json = new Gson().toJson(mList);
+        Editor prefsEditor = mPrefs.edit();
+        prefsEditor.putString("json", json);
+        prefsEditor.commit();
     }
 
     public static String getVersion(Context context) {
