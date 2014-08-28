@@ -8,9 +8,11 @@ import android.content.Context;
 import android.graphics.Paint;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnFocusChangeListener;
 import android.widget.EditText;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -21,6 +23,7 @@ import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XC_MethodHook.MethodHookParam;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 import java.lang.reflect.Type;
@@ -60,7 +63,8 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
                 return;
             }
         }
-
+        
+        // common hook method for all textview methods 
         XC_MethodHook replaceTextMethodHook = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam methodHookParam) throws Throwable {
@@ -73,7 +77,58 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
             }
         };
         
-        
+        // common hook method for all edittext constructors
+        XC_MethodHook editTextMethodHook = new XC_MethodHook() {
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                final EditText editText = (EditText) methodHookParam.thisObject;
+                if (editText instanceof MultiAutoCompleteTextView) {
+                    // XposedBridge.log(TAG + ": MultiAutoCompleteTextView");
+                    return;
+                }
+                editText.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+                    @Override
+                    public void onFocusChange(View view, boolean hasFocus) {
+                        if (!hasFocus) {
+                            String actualText = editText.getText().toString();
+                            // XposedBridge.log(TAG + ": onFocusChange(): " + actualText);
+                            String replacementText = replaceText(actualText);
+                            // prevent stack overflow, only set text if modified
+                            if (!actualText.equals(replacementText)) {
+                                editText.setText(replacementText);
+                                editText.setSelection(editText.getText().length());
+                            }
+                        }
+                    }
+                });
+
+                editText.addTextChangedListener(new TextWatcher() {
+
+                    @Override
+                    public void onTextChanged(CharSequence text, int start, int before, int count) {
+                    }
+
+                    @Override
+                    public void beforeTextChanged(CharSequence text, int start, int count, int after) {
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable editable) {
+                        String actualText = editable.toString();
+                        // XposedBridge.log(TAG + ": afterTextChanged(): " + actualText);
+                        String replacementText = replaceText(actualText);
+                        // prevent stack overflow, only set text if modified
+                        if (!actualText.equals(replacementText)) {
+                            editText.setText(replacementText);
+                            editText.setSelection(editText.getText().length());
+                        }
+                    }
+                });
+            }
+        };
+                
         // hook standard text views
         if (isEnabled("prefTextView")) {
             findAndHookMethod(TextView.class, "setText", CharSequence.class,
@@ -92,53 +147,18 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
         
         // hook editable text views
         if (isEnabled("prefEditText")) {
+            // redundant since edittext descendant of textview?
             findAndHookMethod(EditText.class, "setText", CharSequence.class, TextView.BufferType.class,
                     replaceTextMethodHook);
     
-            findAndHookConstructor(EditText.class, Context.class, new XC_MethodHook() {
-    
-                @Override
-                protected void afterHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                    final EditText editText = (EditText) methodHookParam.thisObject;
-                    editText.setOnFocusChangeListener(new OnFocusChangeListener() {
-    
-                        @Override
-                        public void onFocusChange(View view, boolean hasFocus) {
-                            if (!hasFocus) {
-                                String actualText = editText.getText().toString();
-                                String replacementText = replaceText(actualText);
-                                // prevent stack overflow, only set text if modified
-                                if (!actualText.equals(replacementText)) {
-                                    editText.setText(replacementText);
-                                    editText.setSelection(editText.getText().length());
-                                }
-                            }
-                        }
-                    });
-    
-                    editText.addTextChangedListener(new TextWatcher() {
-    
-                        @Override
-                        public void onTextChanged(CharSequence text, int start, int before, int count) {
-                        }
-    
-                        @Override
-                        public void beforeTextChanged(CharSequence text, int start, int count, int after) {
-                        }
-    
-                        @Override
-                        public void afterTextChanged(Editable editable) {
-                            String actualText = editable.toString();
-                            String replacementText = replaceText(actualText);
-                            // prevent stack overflow, only set text if modified
-                            if (!actualText.equals(replacementText)) {
-                                editText.setText(replacementText);
-                                editText.setSelection(editText.getText().length());
-                            }
-                        }
-                    });
-                }
-            });
+            // public EditText(Context context) 
+            findAndHookConstructor(EditText.class, Context.class, editTextMethodHook);
+            
+            // public EditText(Context context, AttributeSet attrs)
+            findAndHookConstructor(EditText.class, Context.class, AttributeSet.class, editTextMethodHook);
+            
+            // public EditText(Context context, AttributeSet attrs, int defStyle)
+            findAndHookConstructor(EditText.class, Context.class, AttributeSet.class, int.class, editTextMethodHook);        
         }
     }
 
