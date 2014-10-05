@@ -34,5 +34,103 @@
             android:summary="Most single and multi-line user input text boxes and auto-completes.\nNOTE: Issues may occur with password entry or with apps that require specifically formatted inputs."
             android:title="EditTexts" />
     </PreferenceCategory>
+    
+    
+    
+    
+    
+          <PreferenceCategory 
+          android:title="Macro Settings"
+          android:key="prefCatMacroSettings" >
+    
+	      <SwitchPreference
+	          android:defaultValue="true"
+	          android:key="prefMoveCursor"
+	          android:title="Move Cursor"
+	          android:summary="Move cursor to end of text after expansion" />
+	      
+	      <SwitchPreference
+	          android:defaultValue="false"
+	          android:key="prefIgnoreCase"
+	          android:title="Ignore Case"
+	          android:summary="Make macros case insensitive (disregard capitalization)" />
+	      
+	      <SwitchPreference
+	          android:defaultValue="false"
+	          android:key="prefIgnorePassword"
+	          android:title="Ignore Passwords"
+	          android:summary="Don't expand macros in password fields" />
+      
+      </PreferenceCategory>
+      
+      <PreferenceCategory 
+          android:title="Backup/Restore"
+          android:key="prefCatBackupRestore" >
+
+         <Preference
+	          android:key="prefExportMacros"
+	          android:title="Export Replacements"
+	          android:summary="Tap to export/backup replacement list" />
+      
+	      <Preference
+	          android:key="prefImportMacros"
+	          android:title="Import Replacements"
+	          android:summary="Tap to select file to import/restore replacements" />      
+		  
+		  <SwitchPreference
+		      android:defaultValue="false"
+	          android:key="prefImportDebug"
+	          android:title="Import Debug"
+	          android:summary="Enable import/restore debug logging" />           
+	      
+	  </PreferenceCategory>
+
+<!--       <PreferenceScreen  -->
+<!--         android:key="prefCatAbout" -->
+<!--         android:title="About Text Replacement" > -->
+
+      <PreferenceCategory 
+          android:title="About/Support"
+          android:key="prefCatAbout" >
+
+	        <Preference
+	            android:key="prefAboutModule" 
+	            android:title="Xposed Text Replacement" 
+	            android:summary="Developed by Michael Mitchell &#169; 2014. Tap to visit module support thread on XDA" />
+	        
+	        <Preference
+	            android:key="prefAboutXposed"
+	            android:title="Xposed Framework"
+	            android:summary="Developed by rovo89. Tap to visit official Xposed Framework support thread on XDA" />
+	            
+	        <Preference
+	            android:key="prefDonatePaypal"
+	            android:title="Donate"
+	            android:summary="Support development with a PayPal donation" />
+	
+<!-- 	        <Preference -->
+<!-- 	            android:key="prefGithub" -->
+<!-- 	            android:title="Github" -->
+<!-- 	            android:summary="This module is open source software. Tap to view sources on Github" /> -->
+	        
+	        <Preference
+	            android:key="prefChangeLog"
+	            android:title="View Changelog"
+	            android:summary="" />
+	        
+<!-- 	        <Preference -->
+<!-- 	            android:key="prefHelp" -->
+<!-- 	            android:title="Help" -->
+<!-- 	            android:summary="" /> -->
+	        
+      </PreferenceCategory>
+	        
+<!--     </PreferenceScreen> -->
+    
+    
+    
+    
+    
+    
 
 </PreferenceScreen>

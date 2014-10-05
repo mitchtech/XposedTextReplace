@@ -3,5 +3,6 @@
 
     <string name="app_name">Xposed Text Replace</string>
     <string name="xposeddescription">System-wide text replacement with pre-defined alias</string>
+    <string name="chooser_title">Select file</string>
 
 </resources>
