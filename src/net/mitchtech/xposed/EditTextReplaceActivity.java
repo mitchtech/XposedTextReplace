@@ -27,13 +27,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import net.mitchtech.xposed.textreplace.R;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 
 public class EditTextReplaceActivity extends Activity {
 
@@ -42,8 +39,8 @@ public class EditTextReplaceActivity extends Activity {
     
     private ListView mListview;
     private TextView mListEmptyTextView;
-    private ArrayList<TextReplaceEntry> mList;
-    private TextReplaceAdapter mAdapter;
+    private ArrayList<TextReplaceEntry> mAliasList;
+    private TextReplaceAdapter mAliasAdapter;
     private SharedPreferences mPrefs;
 
     @Override
@@ -55,23 +52,10 @@ public class EditTextReplaceActivity extends Activity {
 
         mListview = (ListView) findViewById(R.id.listview);
         mListEmptyTextView = (TextView) findViewById(R.id.listEmptyText);
-        mList = new ArrayList<TextReplaceEntry>();
-
-        String json = mPrefs.getString("json", "");
-        Type type = new TypeToken<List<TextReplaceEntry>>() { }.getType();
-        List<TextReplaceEntry> replacements = new Gson().fromJson(json, type);
-
-        if (replacements == null || replacements.isEmpty()) {
-            mListEmptyTextView.setVisibility(View.VISIBLE);
-        } else {
-            mListEmptyTextView.setVisibility(View.GONE);
-            for (TextReplaceEntry replacement : replacements) {
-                mList.add(replacement);
-            }
-        }
-
-        mAdapter = new TextReplaceAdapter(this, mList);
-        mListview.setAdapter(mAdapter);
+        mAliasList = MacroUtils.loadMacroList(mPrefs);
+        
+        mAliasAdapter = new TextReplaceAdapter(this, mAliasList);
+        mListview.setAdapter(mAliasAdapter);
         mListview.setTextFilterEnabled(true);
         mListview.setOnItemClickListener(new OnItemClickListener() {
 
@@ -90,10 +74,19 @@ public class EditTextReplaceActivity extends Activity {
             }
         });
     }
+    
+    @Override
+    protected void onResume() {
+        if (mAliasList == null || mAliasList.isEmpty()) {
+            mListEmptyTextView.setVisibility(View.VISIBLE);
+        } else {
+            mListEmptyTextView.setVisibility(View.GONE);
+        }
+        super.onResume();
+    }
 
     @Override
     protected void onPause() {
-        saveReplacementList();
         super.onPause();
     }
 
@@ -145,22 +138,23 @@ public class EditTextReplaceActivity extends Activity {
                         String actualText = actual.getText().toString();
                         String replacementText = replacement.getText().toString();
                         
-                        // check for regex in text ($, ^, +, *, ., !, ?, |, \, (), {}, [])
-                        if (isTextRegexFree(actualText) && isTextRegexFree(replacementText)) {
-                            if (position > -1) {
-                                mList.remove(mListview.getItemAtPosition(position));
-                            }
-                            mList.add(new TextReplaceEntry(actualText, replacementText));
-                            mListEmptyTextView.setVisibility(View.GONE);
-                            mAdapter.notifyDataSetChanged();
-                            saveReplacementList();
-                        } else {    
-                            Toast.makeText(
-                                    EditTextReplaceActivity.this,
-                                    "Text cannot contain regular expression characters ($, ^, +, *, ., !, ?, |, \\, (), {}, [])",
-                                    Toast.LENGTH_SHORT).show();
-                            editReplacement(new TextReplaceEntry(actualText, replacementText), position);
+                        // if (isTextRegexFree(actualText) &&
+                        // isTextRegexFree(replacementText)) {
+                        if (position > -1) {
+                            mAliasList.remove(mListview.getItemAtPosition(position));
                         }
+                        mAliasList.add(new TextReplaceEntry(actualText, replacementText));
+                        mListEmptyTextView.setVisibility(View.GONE);
+                        mAliasAdapter.notifyDataSetChanged();
+                        MacroUtils.saveMacroList(mAliasList, mPrefs);
+                        // } else {
+                        // Toast.makeText(
+                        // EditTextReplaceActivity.this,
+                        // "Alias cannot contain regular expression characters ($, ^, +, *, ., !, ?, |, \\, (), {}, [])",
+                        // Toast.LENGTH_SHORT).show();
+                        // editReplacement(new TextReplaceEntry(actualText,
+                        // replacementText), position);
+                        // }
                     }
                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
@@ -175,12 +169,12 @@ public class EditTextReplaceActivity extends Activity {
                 .setMessage("Are you sure you want to delete this replacement?")
                 .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        mList.remove(mListview.getItemAtPosition(position));
-                        if (mList.isEmpty()) {
+                        mAliasList.remove(mListview.getItemAtPosition(position));
+                        if (mAliasList.isEmpty()) {
                             mListEmptyTextView.setVisibility(View.VISIBLE);
                         }
-                        mAdapter.notifyDataSetChanged();
-                        saveReplacementList();
+                        mAliasAdapter.notifyDataSetChanged();
+                        MacroUtils.saveMacroList(mAliasList, mPrefs);
                     }
                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
@@ -188,37 +182,6 @@ public class EditTextReplaceActivity extends Activity {
                 });
         alert.show();
     }
-    
-    private boolean isTextRegexFree(String text) {
-        // ($, ^, +, *, ., !, ?, |, \, (), {}, [])
-        if (text.contains("$") || text.contains("^") || text.contains("+") || text.contains("*")
-                || text.contains(".") || text.contains("!") || text.contains("?")
-                || text.contains("$") || text.contains("|") || text.contains("\\")
-                || text.contains("(") || text.contains(")") || text.contains("{")
-                || text.contains("}") || text.contains("[") || text.contains("]")) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-    
-    private void saveReplacementList() {
-        String json = new Gson().toJson(mList);
-        Editor prefsEditor = mPrefs.edit();
-        prefsEditor.putString("json", json);
-        prefsEditor.commit();
-    }
 
-    public static String getVersion(Context context) {
-        String version = "1.0";
-        try {
-            PackageInfo pi = context.getPackageManager()
-                    .getPackageInfo(context.getPackageName(), 0);
-            version = pi.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "Package name not found", e);
-        }
-        return version;
-    }
 
 }
