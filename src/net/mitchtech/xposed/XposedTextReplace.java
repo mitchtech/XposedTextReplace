@@ -3,6 +3,7 @@ package net.mitchtech.xposed;
 
 import static de.robv.android.xposed.XposedHelpers.findAndHookConstructor;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
+import static de.robv.android.xposed.XposedHelpers.getStaticBooleanField;
 
 import android.content.Context;
 import android.graphics.Paint;
@@ -52,17 +53,20 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
             return;
         }
         
-        // don't proceed if current package is system ui and is disabled
-        if (lpparam.packageName.equals("com.android.systemui")) {
-            if (!isEnabled("prefSystemUi")) {
-                return;
-            }
-        // don't proceed for other apps if preference is disabled
-        } else {
-            if (!isEnabled("prefAllApps")) {
-                return;
-            }
-        }
+//        // don't proceed if current package is system ui and is disabled
+//        if (lpparam.packageName.equals("com.android.systemui")) {
+//            if (!isEnabled("prefSystemUi")) {
+//                return;
+//            }
+//        // don't proceed for other apps if preference is disabled
+//        } 
+        
+        
+//        else {
+//            if (!isEnabled("prefAllApps")) {
+//                return;
+//            }
+//        }
         
         // common hook method for all textview methods 
         XC_MethodHook replaceTextMethodHook = new XC_MethodHook() {
@@ -87,22 +91,22 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
                     // XposedBridge.log(TAG + ": MultiAutoCompleteTextView");
                     return;
                 }
-                editText.setOnFocusChangeListener(new OnFocusChangeListener() {
-
-                    @Override
-                    public void onFocusChange(View view, boolean hasFocus) {
-                        if (!hasFocus) {
-                            String actualText = editText.getText().toString();
-                            // XposedBridge.log(TAG + ": onFocusChange(): " + actualText);
-                            String replacementText = replaceText(actualText);
-                            // prevent stack overflow, only set text if modified
-                            if (!actualText.equals(replacementText)) {
-                                editText.setText(replacementText);
-                                editText.setSelection(editText.getText().length());
-                            }
-                        }
-                    }
-                });
+//                editText.setOnFocusChangeListener(new OnFocusChangeListener() {
+//
+//                    @Override
+//                    public void onFocusChange(View view, boolean hasFocus) {
+//                        if (!hasFocus) {
+//                            String actualText = editText.getText().toString();
+//                            // XposedBridge.log(TAG + ": onFocusChange(): " + actualText);
+//                            String replacementText = replaceText(actualText);
+//                            // prevent stack overflow, only set text if modified
+//                            if (!actualText.equals(replacementText)) {
+//                                editText.setText(replacementText);
+//                                editText.setSelection(editText.getText().length());
+//                            }
+//                        }
+//                    }
+//                });
 
                 editText.addTextChangedListener(new TextWatcher() {
 
@@ -134,9 +138,9 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
             findAndHookMethod(TextView.class, "setText", CharSequence.class,
                     TextView.BufferType.class, boolean.class, int.class, replaceTextMethodHook);
             findAndHookMethod(TextView.class, "setHint", CharSequence.class, replaceTextMethodHook);
-            findAndHookMethod(TextView.class, "append", CharSequence.class, replaceTextMethodHook);
-            findAndHookMethod(TextView.class, "append", CharSequence.class, int.class, int.class,
-                    replaceTextMethodHook);
+//            findAndHookMethod(TextView.class, "append", CharSequence.class, replaceTextMethodHook);
+//            findAndHookMethod(TextView.class, "append", CharSequence.class, int.class, int.class,
+//                    replaceTextMethodHook);
         }
 
         // hook GL canvas text views
@@ -191,7 +195,7 @@ public class XposedTextReplace implements IXposedHookLoadPackage, IXposedHookZyg
         String json = prefs.getString("json", "");
         Type type = new TypeToken<List<TextReplaceEntry>>() { }.getType();
         replacements = new Gson().fromJson(json, type);
-        XposedBridge.log(TAG + ": prefs loaded.");
+        XposedBridge.log(TAG + ": prefs loaded. Replacement count: " + replacements.size());
     }
 
 }
