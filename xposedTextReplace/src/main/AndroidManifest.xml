@@ -1,11 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.mitchtech.xposed.textreplace"
-    android:versionCode="1"
-    android:versionName="1.0" >
-
-    <uses-sdk
-        android:minSdkVersion="14"
-        android:targetSdkVersion="20" />
+    package="net.mitchtech.xposed.textreplace" >
     
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -36,9 +30,8 @@
         <activity
             android:name="net.mitchtech.xposed.TextReplacePreferenceActivity"
             android:label="@string/app_name"
-            android:parentActivityName="net.mitchtech.xposed.EditTextReplaceActivity" >
-        </activity>
-        
+            android:parentActivityName="net.mitchtech.xposed.EditTextReplaceActivity" />
+
         <activity
             android:name="com.ipaulpro.afilechooser.FileChooserActivity"
             android:enabled="@bool/use_activity"
