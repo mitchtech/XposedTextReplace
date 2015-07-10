@@ -1,18 +1,13 @@
 
 package net.mitchtech.xposed;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,15 +19,12 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.gson.Gson;
 
 import net.mitchtech.xposed.textreplace.R;
 
 import java.util.ArrayList;
 
-public class EditTextReplaceActivity extends Activity {
+public class EditTextReplaceActivity extends AppCompatActivity {
 
     private static final String TAG = EditTextReplaceActivity.class.getSimpleName();
     private static final String PKG_NAME = "net.mitchtech.xposed.textreplace";

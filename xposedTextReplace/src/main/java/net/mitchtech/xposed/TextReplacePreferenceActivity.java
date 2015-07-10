@@ -12,10 +12,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
+import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Window;
 import android.webkit.WebView;
 
 import com.ipaulpro.afilechooser.utils.FileUtils;
@@ -28,15 +28,15 @@ import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
-public class TextReplacePreferenceActivity extends PreferenceActivity {
+public class TextReplacePreferenceActivity extends AppCompatActivity {
 
     private static final String TAG = TextReplacePreferenceActivity.class.getSimpleName();
     private static final String PKG_NAME = "net.mitchtech.xposed.textreplace";
     private static final int FORMAT_AHK = 0;
     private static final int FORMAT_JSON = 1;
-    
+
     private SharedPreferences mPrefs;
-    
+
     private Preference mPrefImportMacros;
     private Preference mPrefExportMacros;
     private Preference mPrefAboutModule;
@@ -45,63 +45,97 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
     private Preference mPrefGithub;
     private Preference mPrefHelp;
     private Preference mPrefChangeLog;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         super.onCreate(savedInstanceState);
-        
-        // this is important since settings executed in the context of the hooked package
-        getPreferenceManager().setSharedPreferencesMode(Context.MODE_WORLD_READABLE);
-        addPreferencesFromResource(R.xml.settings);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-        
-        mPrefs = getPreferenceScreen().getSharedPreferences();
-        
-        mPrefImportMacros = findPreference("prefImportMacros");
-        mPrefExportMacros = findPreference("prefExportMacros");        
-        mPrefAboutModule = findPreference("prefAboutModule");
-        mPrefAboutXposed = findPreference("prefAboutXposed");
-        mPrefDonatePaypal = findPreference("prefDonatePaypal");
-        mPrefGithub = findPreference("prefGithub");
-        mPrefHelp = findPreference("prefHelp");
-        mPrefChangeLog = findPreference("prefChangeLog");
+//        getPreferenceManager().setSharedPreferencesMode(Context.MODE_WORLD_READABLE);
+//        addPreferencesFromResource(R.xml.settings);
 
-        String version = MacroUtils.getVersion(this);
-        mPrefAboutModule.setTitle(this.getTitle() + version);
-    }
-    
-    @Override
-    public boolean onPreferenceTreeClick(PreferenceScreen prefScreen, Preference pref) {
-        Intent intent = null;
-        
-        if (pref == mPrefImportMacros) {
-            importFormatDialog();
-        } else if (pref == mPrefExportMacros) {
-            exportFormatDialog();
-        } else if (pref == mPrefAboutModule) {
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_xda)));
-        } else if (pref == mPrefAboutXposed) {
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_xposed)));
-        } else if (pref == mPrefDonatePaypal) {
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_paypal)));
-        } else if (pref == mPrefGithub) {
-        } else if (pref == mPrefHelp) {
-        } else if (pref == mPrefChangeLog) {
-            changelogDialog();
+        if (savedInstanceState == null) {
+            getFragmentManager().beginTransaction().add(android.R.id.content, new SettingsFragment()).commit();
         }
-        
-        if (intent != null) {
-            try {
-                startActivity(intent);
-            } catch (ActivityNotFoundException e) {
-                e.printStackTrace();
+    }
+
+    public class SettingsFragment extends PreferenceFragment implements
+            SharedPreferences.OnSharedPreferenceChangeListener {
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            getPreferenceManager().setSharedPreferencesMode(Context.MODE_WORLD_READABLE);
+            addPreferencesFromResource(R.xml.settings);
+
+
+            // this is important since settings executed in the context of the hooked package
+            getPreferenceManager().setSharedPreferencesMode(Context.MODE_WORLD_READABLE);
+            addPreferencesFromResource(R.xml.settings);
+//            getActionBar().setDisplayHomeAsUpEnabled(true);
+
+            mPrefs = getPreferenceScreen().getSharedPreferences();
+
+            mPrefImportMacros = findPreference("prefImportMacros");
+            mPrefExportMacros = findPreference("prefExportMacros");
+            mPrefAboutModule = findPreference("prefAboutModule");
+            mPrefAboutXposed = findPreference("prefAboutXposed");
+            mPrefDonatePaypal = findPreference("prefDonatePaypal");
+            mPrefGithub = findPreference("prefGithub");
+            mPrefHelp = findPreference("prefHelp");
+            mPrefChangeLog = findPreference("prefChangeLog");
+
+            String version = MacroUtils.getVersion(TextReplacePreferenceActivity.this);
+            mPrefAboutModule.setTitle(TextReplacePreferenceActivity.this.getTitle() + version);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+        }
+
+        @Override
+        public boolean onPreferenceTreeClick(PreferenceScreen prefScreen, Preference pref) {
+            Intent intent = null;
+
+            if (pref == mPrefImportMacros) {
+                importFormatDialog();
+            } else if (pref == mPrefExportMacros) {
+                exportFormatDialog();
+            } else if (pref == mPrefAboutModule) {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_xda)));
+            } else if (pref == mPrefAboutXposed) {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_xposed)));
+            } else if (pref == mPrefDonatePaypal) {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_paypal)));
+            } else if (pref == mPrefGithub) {
+            } else if (pref == mPrefHelp) {
+            } else if (pref == mPrefChangeLog) {
+                changelogDialog();
             }
-            return true;
+
+            if (intent != null) {
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            return super.onPreferenceTreeClick(prefScreen, pref);
         }
-        return super.onPreferenceTreeClick(prefScreen, pref);
     }
-    
+
     private void importFileChooser(int format) {
         Intent target = FileUtils.createGetContentIntent();
         // target.setType(FileUtils.MIME_TYPE_TEXT);
@@ -135,13 +169,13 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-    
+
     private void importConfirmDialog(final String path, final int format) {
         final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
         alert.setIcon(R.drawable.ic_launcher).setTitle("Overwrite Replacements?")
 //                .setMessage("Do you want to overwrite your macro list or append imported entries? \n\nThis operation cannot be undone!")
-                  .setMessage("Are you sure you want to overwrite your replacement list with imported entries? \n\nThis operation cannot be undone!")
-                  .setPositiveButton("Overwrite", new DialogInterface.OnClickListener() {
+                .setMessage("Are you sure you want to overwrite your replacement list with imported entries? \n\nThis operation cannot be undone!")
+                .setPositiveButton("Overwrite", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         // setProgressBarIndeterminateVisibility(true);
                         new ImportMacroListTask(format).execute(path);
@@ -150,12 +184,12 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
 //                    public void onClick(DialogInterface dialog, int whichButton) {
 //                    }
                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                    }
-                });
+            public void onClick(DialogInterface dialog, int whichButton) {
+            }
+        });
         alert.show();
     }
-    
+
     private void importFormatDialog() {
         final CharSequence[] items = {"AutoHotKey", "JSON"};
         final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
@@ -178,7 +212,7 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 });
         alert.show();
     }
-    
+
     private void importResultDialog(final String log) {
         final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
         alert.setIcon(R.drawable.ic_launcher).setTitle("Import Result")
@@ -191,7 +225,7 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 });
         alert.show();
     }
-    
+
     private void exportFormatDialog() {
         final CharSequence[] items = {"AutoHotKey", "JSON"};
         final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
@@ -217,7 +251,7 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 });
         alert.show();
     }
-    
+
     private void exportResultDialog(final String log) {
         final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
         alert.setIcon(R.drawable.ic_launcher).setTitle("Export Result")
@@ -229,9 +263,9 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 });
         alert.show();
     }
-    
+
     private void changelogDialog() {
-        WebView webView = new WebView (this);
+        WebView webView = new WebView(this);
         webView.loadUrl("file:///android_asset/changelog.html");
         final AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setIcon(R.drawable.ic_launcher).setTitle("Changelog")
@@ -243,21 +277,21 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 });
         alert.show();
     }
-    
+
     class ImportMacroListTask extends AsyncTask<String, Void, String> {
 
         int mFormat;
-        
+
         public ImportMacroListTask(int format) {
             mFormat = format;
         }
-        
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             setProgressBarIndeterminateVisibility(true);
         }
-        
+
         @Override
         protected String doInBackground(String... params) {
             StringBuilder json = new StringBuilder();
@@ -265,7 +299,7 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
             String path = params[0];
             ArrayList<TextReplaceEntry> macroList = new ArrayList<TextReplaceEntry>();
             String line;
-            
+
             try {
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
                 while ((line = bufferedReader.readLine()) != null) {
@@ -297,20 +331,20 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                     }
                 }
                 bufferedReader.close();
-                         
+
                 if (mFormat == FORMAT_JSON) {
                     macroList = MacroUtils.jsonToMacroArrayList(json.toString());
                 }
-                
+
                 String result;
                 if (macroList.size() > 0) {
-                    result = "Complete. Imported: " + macroList.size() + " replacements from " + path; 
-                            // + "\n\nSoft reboot to activate";
-                    MacroUtils.saveMacroList(macroList, mPrefs);                
+                    result = "Complete. Imported: " + macroList.size() + " replacements from " + path;
+                    // + "\n\nSoft reboot to activate";
+                    MacroUtils.saveMacroList(macroList, mPrefs);
                 } else {
                     result = "Complete. No replacements found in file " + path;
                 }
-                
+
                 if (mPrefs.getBoolean("prefImportDebug", false)) {
                     FileOutputStream fileOutputStream = new FileOutputStream(path + ".log");
                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
@@ -319,59 +353,59 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                     fileOutputStream.close();
                     result = result + "\n\nDebug log output to " + path + ".log";
                 }
-                
+
                 return result;
-                
+
             } catch (Exception e) {
                 Log.e(TAG, "File import error:", e);
                 return "File import error:" + e;
             }
         }
-        
+
         protected void onPostExecute(String result) {
             setProgressBarIndeterminateVisibility(false);
             final String output = result.toString();
             importResultDialog(output);
         }
     }
-    
+
     class ExportMacroListTask extends AsyncTask<String, Void, String> {
 
         int mFormat;
-        
+
         public ExportMacroListTask(int format) {
             mFormat = format;
         }
-        
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             setProgressBarIndeterminateVisibility(true);
         }
-        
+
         @Override
         protected String doInBackground(String... params) {
             ArrayList<TextReplaceEntry> macroList = MacroUtils.loadMacroList(mPrefs);
-            
-            if (macroList == null || macroList.isEmpty()) { 
+
+            if (macroList == null || macroList.isEmpty()) {
                 return "Replacement list empty. No file was exported.";
             }
-            
+
             try {
                 String path = "";
                 FileOutputStream fileOutputStream = null;
                 OutputStreamWriter outputStreamWriter = null;
-                
+
                 switch (mFormat) {
                     case FORMAT_AHK:
                         path = Environment.getExternalStorageDirectory() + "/replacements.ahk";
                         fileOutputStream = new FileOutputStream(path);
                         outputStreamWriter = new OutputStreamWriter(fileOutputStream);
-                        for (TextReplaceEntry macro : macroList) {              
+                        for (TextReplaceEntry macro : macroList) {
                             outputStreamWriter.append("::" + macro.actual + "::" + macro.replacement + "\n");
                         }
                         break;
-                        
+
                     case FORMAT_JSON:
                         path = Environment.getExternalStorageDirectory() + "/replacements.json";
                         fileOutputStream = new FileOutputStream(path);
@@ -386,13 +420,12 @@ public class TextReplacePreferenceActivity extends PreferenceActivity {
                 outputStreamWriter.close();
                 fileOutputStream.close();
                 return "Complete. Exported " + macroList.size() + " replacements to " + path;
-            } 
-            catch (Exception e) {
+            } catch (Exception e) {
                 Log.e(TAG, "File export error: ", e);
                 return "File export error: " + e;
             }
         }
-        
+
         protected void onPostExecute(String result) {
             setProgressBarIndeterminateVisibility(false);
             final String output = result.toString();
