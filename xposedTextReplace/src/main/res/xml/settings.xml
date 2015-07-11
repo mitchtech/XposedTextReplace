@@ -63,17 +63,17 @@
         android:key="prefCatBackupRestore"
         android:title="Backup/Restore">
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefExportMacros"
             android:summary="Tap to export/backup replacement list"
             android:title="Export Replacements" />
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefImportMacros"
             android:summary="Tap to select file to import/restore replacements"
             android:title="Import Replacements" />
 
-        <SwitchPreference
+        <com.cgollner.unclouded.preferences.SwitchPreferenceCompat
             android:defaultValue="false"
             android:key="prefImportDebug"
             android:summary="Enable import/restore debug logging"
@@ -88,17 +88,17 @@
         android:key="prefCatAbout"
         android:title="About/Support">
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefAboutModule"
             android:summary="Developed by Michael Mitchell &#169; 2014. Tap to visit module support thread on XDA"
             android:title="Xposed Text Replacement" />
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefAboutXposed"
             android:summary="Developed by rovo89. Tap to visit official Xposed Framework support thread on XDA"
             android:title="Xposed Framework" />
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefDonatePaypal"
             android:summary="Support development with a PayPal donation"
             android:title="Donate" />
@@ -108,7 +108,7 @@
         <!--android:summary="This module is open source software. Tap to view sources on Github"-->
         <!--android:title="Github" /> -->
 
-        <com.jenzz.materialpreference.Preference
+        <Preference
             android:key="prefChangeLog"
             android:summary=""
             android:title="View Changelog" />
