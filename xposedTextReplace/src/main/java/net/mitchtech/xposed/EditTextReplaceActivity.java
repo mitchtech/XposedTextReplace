@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +23,9 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.getbase.floatingactionbutton.FloatingActionButton;
+import com.mikepenz.iconics.IconicsDrawable;
+import com.mikepenz.iconics.typeface.FontAwesome;
 import com.tsengvn.typekit.TypekitContextWrapper;
 
 import net.mitchtech.xposed.textreplace.R;
@@ -31,7 +36,7 @@ public class EditTextReplaceActivity extends AppCompatActivity {
 
     private static final String TAG = EditTextReplaceActivity.class.getSimpleName();
     private static final String PKG_NAME = "net.mitchtech.xposed.textreplace";
-    
+
     private ListView mListview;
     private TextView mListEmptyTextView;
     private ArrayList<TextReplaceEntry> mAliasList;
@@ -43,12 +48,12 @@ public class EditTextReplaceActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_edit_replacements);
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());     
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         mListview = (ListView) findViewById(R.id.listview);
         mListEmptyTextView = (TextView) findViewById(R.id.listEmptyText);
         mAliasList = MacroUtils.loadMacroList(mPrefs);
-        
+
         mAliasAdapter = new TextReplaceAdapter(this, mAliasList);
         mListview.setAdapter(mAliasAdapter);
         mListview.setTextFilterEnabled(true);
@@ -68,8 +73,18 @@ public class EditTextReplaceActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        Drawable plus = new IconicsDrawable(this, FontAwesome.Icon.faw_plus).color(Color.WHITE).sizeDp(20);
+        FloatingActionButton addButton = (FloatingActionButton) findViewById(R.id.add);
+        addButton.setImageDrawable(plus);
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addReplacement();
+            }
+        });
     }
-    
+
     @Override
     protected void onResume() {
         if (mAliasList == null || mAliasList.isEmpty()) {
@@ -134,10 +149,10 @@ public class EditTextReplaceActivity extends AppCompatActivity {
         alert.setIcon(R.drawable.ic_launcher).setTitle("Define Replacement").setView(textEntryView)
                 .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        
+
                         String actualText = actual.getText().toString();
                         String replacementText = replacement.getText().toString();
-                        
+
                         // if (isTextRegexFree(actualText) &&
                         // isTextRegexFree(replacementText)) {
                         if (position > -1) {
@@ -157,9 +172,9 @@ public class EditTextReplaceActivity extends AppCompatActivity {
                         // }
                     }
                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                    }
-                });
+            public void onClick(DialogInterface dialog, int whichButton) {
+            }
+        });
         alert.show();
     }
 
@@ -177,9 +192,9 @@ public class EditTextReplaceActivity extends AppCompatActivity {
                         MacroUtils.saveMacroList(mAliasList, mPrefs);
                     }
                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                    }
-                });
+            public void onClick(DialogInterface dialog, int whichButton) {
+            }
+        });
         alert.show();
     }
 
