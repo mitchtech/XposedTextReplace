@@ -1,9 +1,7 @@
 
 package net.mitchtech.xposed;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -23,6 +21,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.typeface.FontAwesome;
@@ -145,16 +144,17 @@ public class EditTextReplaceActivity extends AppCompatActivity {
         actual.setText(entry.actual, TextView.BufferType.EDITABLE);
         replacement.setText(entry.replacement, TextView.BufferType.EDITABLE);
 
-        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Define Replacement").setView(textEntryView)
-                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
+        new MaterialDialog.Builder(EditTextReplaceActivity.this)
+                .title("Define Macro")
+                .customView(textEntryView, true)
+                .positiveText("Save")
+                .negativeText("Cancel")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
                         String actualText = actual.getText().toString();
                         String replacementText = replacement.getText().toString();
-
-                        // if (isTextRegexFree(actualText) &&
-                        // isTextRegexFree(replacementText)) {
+                        // if (isTextRegexFree(actualText)
                         if (position > -1) {
                             mAliasList.remove(mListview.getItemAtPosition(position));
                         }
@@ -162,28 +162,19 @@ public class EditTextReplaceActivity extends AppCompatActivity {
                         mListEmptyTextView.setVisibility(View.GONE);
                         mAliasAdapter.notifyDataSetChanged();
                         MacroUtils.saveMacroList(mAliasList, mPrefs);
-                        // } else {
-                        // Toast.makeText(
-                        // EditTextReplaceActivity.this,
-                        // "Alias cannot contain regular expression characters ($, ^, +, *, ., !, ?, |, \\, (), {}, [])",
-                        // Toast.LENGTH_SHORT).show();
-                        // editReplacement(new TextReplaceEntry(actualText,
-                        // replacementText), position);
-                        // }
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-            }
-        });
-        alert.show();
+                }).show();
     }
 
     private void removeReplacement(final int position) {
-        final AlertDialog.Builder alert = new AlertDialog.Builder(EditTextReplaceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Delete Replacement?")
-                .setMessage("Are you sure you want to delete this replacement?")
-                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
+        new MaterialDialog.Builder(EditTextReplaceActivity.this)
+                .title("Delete Macro?")
+                .content("Are you sure you want to delete this replacement?")
+                .positiveText("Confirm")
+                .negativeText("Cancel")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
                         mAliasList.remove(mListview.getItemAtPosition(position));
                         if (mAliasList.isEmpty()) {
                             mListEmptyTextView.setVisibility(View.VISIBLE);
@@ -191,12 +182,25 @@ public class EditTextReplaceActivity extends AppCompatActivity {
                         mAliasAdapter.notifyDataSetChanged();
                         MacroUtils.saveMacroList(mAliasList, mPrefs);
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-            }
-        });
-        alert.show();
+
+                    @Override
+                    public void onNegative(MaterialDialog dialog) {
+                        // no action
+                    }
+
+                    @Override
+                    public void onNeutral(MaterialDialog dialog) {
+
+                    }
+                }).show();
     }
 
-
+    private void macroListLengthWarningDialog(int length) {
+        new MaterialDialog.Builder(EditTextReplaceActivity.this)
+                .title("Size Warning")
+                .content("Waring, macro list contains " + length
+                        + " entries. This is permitted, but performance my degrade as a result")
+                .positiveText("OK")
+                .show();
+    }
 }

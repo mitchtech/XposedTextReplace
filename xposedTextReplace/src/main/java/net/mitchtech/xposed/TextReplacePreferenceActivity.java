@@ -1,10 +1,8 @@
 
 package net.mitchtech.xposed;
 
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -16,8 +14,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.ipaulpro.afilechooser.utils.FileUtils;
 import com.tsengvn.typekit.TypekitContextWrapper;
 
@@ -177,34 +177,29 @@ public class TextReplacePreferenceActivity extends AppCompatActivity {
     }
 
     private void importConfirmDialog(final String path, final int format) {
-        final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Overwrite Replacements?")
-//                .setMessage("Do you want to overwrite your macro list or append imported entries? \n\nThis operation cannot be undone!")
-                .setMessage("Are you sure you want to overwrite your replacement list with imported entries? \n\nThis operation cannot be undone!")
-                .setPositiveButton("Overwrite", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
+        new MaterialDialog.Builder(TextReplacePreferenceActivity.this)
+                .title("Overwrite Macro List?")
+//                .content("Do you want to overwrite your replacement list or append imported entries? \n\nThis operation cannot be undone!")
+                .content("Are you sure you want to overwrite your replacement list with imported entries? \n\nThis operation cannot be undone!")
+                .positiveText("Overwrite")
+                .negativeText("Cancel")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
                         // setProgressBarIndeterminateVisibility(true);
                         new ImportMacroListTask(format).execute(path);
                     }
-//                }).setNeutralButton("Append", new DialogInterface.OnClickListener() {
-//                    public void onClick(DialogInterface dialog, int whichButton) {
-//                    }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-            }
-        });
-        alert.show();
+                }).show();
     }
 
     private void importFormatDialog() {
         final CharSequence[] items = {"AutoHotKey", "JSON"};
-        final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher)
-                .setTitle("Select Import Format")
-                .setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
-
+        new MaterialDialog.Builder(TextReplacePreferenceActivity.this)
+                .title("Select Import Format")
+                .items(items)
+                .itemsCallbackSingleChoice(-1, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         switch (which) {
                             case FORMAT_AHK:
                                 importFileChooser(FORMAT_AHK);
@@ -213,34 +208,33 @@ public class TextReplacePreferenceActivity extends AppCompatActivity {
                                 importFileChooser(FORMAT_JSON);
                                 break;
                         }
-                        dialog.dismiss();
+                        return true;
                     }
-                });
-        alert.show();
+                }).show();
     }
 
     private void importResultDialog(final String log) {
-        final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Import Result")
-                .setMessage(log)
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
+        new MaterialDialog.Builder(TextReplacePreferenceActivity.this)
+                .title("Import Result")
+                .content(log)
+                .cancelable(false)
+                .positiveText("OK")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
                         MacroUtils.reloadLauncherActivity(TextReplacePreferenceActivity.this);
                     }
-                });
-        alert.show();
+                }).show();
     }
 
     private void exportFormatDialog() {
         final CharSequence[] items = {"AutoHotKey", "JSON"};
-        final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher)
-                .setTitle("Select Export Format")
-                .setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
-
+        new MaterialDialog.Builder(TextReplacePreferenceActivity.this)
+                .title("Select Export Format")
+                .items(items)
+                .itemsCallbackSingleChoice(-1, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         setProgressBarIndeterminateVisibility(true);
                         switch (which) {
                             case FORMAT_AHK:
@@ -252,36 +246,39 @@ public class TextReplacePreferenceActivity extends AppCompatActivity {
                                 new ExportMacroListTask(FORMAT_JSON).execute();
                                 break;
                         }
-                        dialog.dismiss();
+                        return true;
                     }
-                });
-        alert.show();
+                }).show();
     }
 
     private void exportResultDialog(final String log) {
-        final AlertDialog.Builder alert = new AlertDialog.Builder(TextReplacePreferenceActivity.this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Export Result")
-                .setMessage(log)
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
+        new MaterialDialog.Builder(TextReplacePreferenceActivity.this)
+                .title("Export Result")
+                .content(log)
+                .cancelable(false)
+                .positiveText("OK")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        super.onPositive(dialog);
                     }
-                });
-        alert.show();
+                }).show();
     }
 
     private void changelogDialog() {
         WebView webView = new WebView(this);
         webView.loadUrl("file:///android_asset/changelog.html");
-        final AlertDialog.Builder alert = new AlertDialog.Builder(this);
-        alert.setIcon(R.drawable.ic_launcher).setTitle("Changelog")
-                .setView(webView)
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
+        new MaterialDialog.Builder(this)
+                .title("Changelog")
+                .customView(webView, false)
+                .cancelable(false)
+                .positiveText("OK")
+                .callback(new MaterialDialog.ButtonCallback() {
+                    @Override
+                    public void onPositive(MaterialDialog dialog) {
+                        super.onPositive(dialog);
                     }
-                });
-        alert.show();
+                }).show();
     }
 
     class ImportMacroListTask extends AsyncTask<String, Void, String> {
